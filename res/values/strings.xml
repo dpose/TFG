@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">TrackingAndWarningSystem</string>
+    <string name="title_activity_menu_principal">MenuPrincipal</string>
+    <string name="mostrardatos">Mostrar Datos</string>
+    <string name="editardatos">Editar Datos</string>
+    <string name="activarcajanegra">Activar Caja Negra</string>
+    <string name="desactivarcajanegra">Desactivar Caja Negra</string>
+    <string name="mostrarcajanegra">Recorrido Caja Negra</string>
+    <string name="listarpartes">Listar Partes</string>
+    <string name="darparte">Dar Parte</string>
+    <string name="ajustes">Ajustes</string>
+    <string name="salir">Salir</string>
+    <string name="vacio" />
+    <string name="conductor">Datos del conductor</string>
+    <string name="nombre">Nombre:</string>
+    <string name="apellidos">Apellidos:</string>
+    <string name="dni">DNI:</string>
+    <string name="dir">Dirección:</string>
+    <string name="propietario">Datos del propietario</string>
+    <string name="vehiculo">Datos del vehículo</string>
+    <string name="marca">Marca:</string>
+    <string name="modelo">Modelo:</string>
+    <string name="color">Color:</string>
+    <string name="matricula">Matrícula</string>
+    <string name="poliza">Datos de la aseguradora</string>
+    <string name="aseguradora">Aseguradora:</string>
+    <string name="numpoliza">Nº de póliza:</string>
+    <string name="generarqr">Generar QR</string>
+    <string name="qrcode">QR Code</string>
+    <string name="guardar">Guardar</string>
+    <string name="title_activity_mis_datos">MisDatos</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_editar_datos">EditarDatos</string>
+    <string name="title_activity_mostrar_caja_negra">MostrarCajaNegra</string>
+    <string name="title_activity_mostrar_partes">MostrarPartes</string>
+    <string name="title_activity_ver_partes">VerPartes</string>
+
+</resources>
