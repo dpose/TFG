@@ -26,12 +26,22 @@ import android.view.View;
 import android.widget.Toast;
 import android.telephony.SmsManager;
 
-public class CajaNegra extends Service {
+public class CajaNegra extends Service implements SensorEventListener {
 
 	public LocationManager locationManager;
 	public MyLocationListener listener;
-	public Acelerometro acelerometro;
+	public MyLocationListener sms;
+	SensorManager manager;
 	boolean warn;
+	final int X = 0;
+    final int Y = 1;
+    final int Z = 2;
+    float gforcex;
+    float gforcey;
+    float gforcez;
+    float gforce;
+    double latitud;
+	double longitud;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -47,6 +57,18 @@ public class CajaNegra extends Service {
 			File file = new File("cajanegra");
 			file.delete();
 		}
+		
+		//Obtenemos los "manager" de los sensores del movil
+		manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		//Miramos a ver si hay por lo menos uno de tipo ACCELEROMETRO
+		if (manager.getSensorList(Sensor.TYPE_ACCELEROMETER).size() != 0) {
+			//Si es el caso, obtenemos el primero de la lista
+			Sensor accelerometer = manager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
+			//Le definimos como listener "this" (nuestra clase) el sensor que hemos obtenido, y le definimos una frequencia SENSOR_DELAY_GAME
+			if (!manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)) {
+				//Aqui podemos mostrar un mensaje de error en caso de que no se pueda definir el listener
+			}
+		}
 
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		listener = new MyLocationListener();
@@ -59,6 +81,7 @@ public class CajaNegra extends Service {
 	public void onDestroy() {
 		// TODO Auto-generated method stub
 		locationManager.removeUpdates(listener);
+	    manager.unregisterListener(this);
 		super.onDestroy();
 	}
 
@@ -81,6 +104,47 @@ public class CajaNegra extends Service {
 		}
 
 	}
+	
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		
+		sms = new MyLocationListener();
+
+		gforce = anularGravedad(event);
+		if (gforce > 1){
+			sms.sendSMS("112", "Accidente de "+gforce+" G en las coordenadas: "+latitud + " " + longitud);
+			Toast.makeText(this, "SMS enviado", Toast.LENGTH_SHORT).show();
+		}
+
+	}
+
+	public float anularGravedad(SensorEvent event){
+
+		float gravedadX = event.values[X];
+		float gravedadY = event.values[Y];
+		float gravedadZ = event.values[Z];
+		float gravedad = (float) Math.sqrt((Math.pow(gravedadX, 2)) + (Math.pow(gravedadY, 2)) + (Math.pow(gravedadZ, 2)));
+		float suma = Math.abs(gravedadX) + Math.abs(gravedadY) + Math.abs(gravedadZ);
+
+		float auxX = (gravedadX/suma) * gravedad;
+		float auxY = (gravedadY/suma) * gravedad;
+		float auxZ = (gravedadZ/suma) * gravedad;
+
+		float aceleracionX = gravedadX - auxX;
+		float aceleracionY = gravedadY - auxY;
+		float aceleracionZ = gravedadZ - auxZ;
+
+		float aceleracion = (float) Math.sqrt((Math.pow(aceleracionX, 2)) + (Math.pow(aceleracionY, 2)) + (Math.pow(aceleracionZ, 2)));
+		float gforce = aceleracion/gravedad;
+
+		return gforce;
+	}
 
 	public class MyLocationListener implements LocationListener {
 
@@ -90,14 +154,11 @@ public class CajaNegra extends Service {
 			time.setToNow();
 			String fecha = time.monthDay + "-" + (time.month + 1) + "-" + time.year;
 			String hora = time.hour + ":" + time.minute + ":" + time.second;
-			double latitud = loc.getLatitude();
-			double longitud = loc.getLongitude();
+			latitud = loc.getLatitude();
+			longitud = loc.getLongitude();
 			String datos = "[" + fecha + " " + hora + "] Posición = " + latitud + " " + longitud;
 			datos = datos + "\n";
 			guardarCajaNegra(datos);
-			
-			acelerometro = new Acelerometro();
-			acelerometro.main();
 
 		}
 
@@ -137,76 +198,6 @@ public class CajaNegra extends Service {
 			SmsManager sms = SmsManager.getDefault();
 			sms.sendTextMessage(telf, null, mensaje, null, null);
 		}
-	}
-	
-	public class Acelerometro implements SensorEventListener {
-		
-		final int X = 0;
-        final int Y = 1;
-        final int Z = 2;
-        float gforcex;
-        float gforcey;
-        float gforcez;
-        public MyLocationListener sms;
-
-        public void main(){
-			//Obtenemos los "manager" de los sensores del movil
-			SensorManager manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-			//Miramos a ver si hay por lo menos uno de tipo ACCELEROMETRO
-			if (manager.getSensorList(Sensor.TYPE_ACCELEROMETER).size() != 0) {
-				//Si es el caso, obtenemos el primero de la lista
-				Sensor accelerometer = manager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
-				//Le definimos como listener "this" (nuestra clase) el sensor que hemos obtenido, y le definimos una frequencia SENSOR_DELAY_GAME
-				if (!manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)) {
-					//Aqui podemos mostrar un mensaje de error en caso de que no se pueda definir el listener
-				}
-			}
-		}
-
-		@Override
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void onSensorChanged(SensorEvent event) {
-			
-			float gforce;
-			sms = new MyLocationListener();
-
-			gforce = anularGravedad(event);
-			if (gforce > 1){
-				sms.sendSMS("000000000", "Aquí va el mensaje de alerta");
-			}
-
-		}
-
-		public float anularGravedad(SensorEvent event){
-
-			float gravedadX = event.values[X];
-			float gravedadY = event.values[Y];
-			float gravedadZ = event.values[Z];
-			float gravedad = (float) Math.sqrt((Math.pow(gravedadX, 2)) + (Math.pow(gravedadY, 2)) + (Math.pow(gravedadZ, 2)));
-			float suma = Math.abs(gravedadX) + Math.abs(gravedadY) + Math.abs(gravedadZ);
-
-			float auxX = (gravedadX/suma) * gravedad;
-			float auxY = (gravedadY/suma) * gravedad;
-			float auxZ = (gravedadZ/suma) * gravedad;
-
-			float aceleracionX = gravedadX - auxX;
-			float aceleracionY = gravedadY - auxY;
-			float aceleracionZ = gravedadZ - auxZ;
-
-			gforcex = aceleracionX/gravedad;
-			gforcey = aceleracionY/gravedad;
-			gforcez = aceleracionZ/gravedad;
-			
-			float gforce = (float) Math.sqrt((Math.pow(gforcex, 2)) + (Math.pow(gforcey, 2)) + (Math.pow(gforcez, 2)));
-
-			return gforce;
-		}
-
 	}
 
 }
